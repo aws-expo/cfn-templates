@@ -3,7 +3,7 @@
 To deploy cloudformation stack:
 
 ```
-$ aws cloudformation deploy --template-file ./stack.json --stack-name my-stack --parameter-overrides BucketName=awesome
+$ aws cloudformation deploy --template-file ./CloudFormation.json --stack-name my-stack --parameter-overrides BucketName=awesome
 ```
 
 ### Getting Started
