@@ -25,7 +25,9 @@
               "Configuration": {
                 "Owner": "mucahitnezir",
                 "Repo": "personal-website",
-                "Branch": "main"
+                "Branch": "main",
+                "PollForSourceChanges": false,
+                "OAuthToken": { "Ref": "GitHubTokenParam" }
               },
               "OutputArtifacts": [
                 {
@@ -34,7 +36,30 @@
               ]
             }
           ]
-        }
+        },
+        {
+					"Name": "Build",
+					"Actions": [
+						{
+							"Name": "Source",
+							"RunOrder": 1,
+							"InputArtifacts": [
+								{
+									"Name": "material"
+								}
+							],
+							"Configuration": {
+								"ProjectName": { "Ref": "CodeBuildInbound" }
+							},
+							"ActionTypeId": {
+								"Category": "Build",
+								"Owner": "AWS",
+								"Provider": "CodeBuild",
+								"Version": "1"
+							}
+						}
+					]
+				}
       ]
     }
   }

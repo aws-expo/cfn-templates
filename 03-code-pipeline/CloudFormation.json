@@ -1,0 +1,268 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "This is super CloudFormation template.",
+	"Parameters": {
+		"GitHubTokenParam": {
+			"Type": "String",
+			"NoEcho": true
+		}
+	},
+	"Resources": {
+		"CodeBuildInbound": {
+			"Type": "AWS::CodeBuild::Project",
+			"Properties": {
+				"Name": "building",
+				"ServiceRole": {
+					"Fn::GetAtt": [
+						"CodeBuildRole",
+						"Arn"
+					]
+				},
+				"TimeoutInMinutes": 60,
+				"Source": {
+					"Type": "CODEPIPELINE",
+					"BuildSpec": "buildspec.yml"
+				},
+				"Artifacts": {
+					"Type": "CODEPIPELINE"
+				},
+				"Environment": {
+					"Type": "LINUX_CONTAINER",
+					"ComputeType": "BUILD_GENERAL1_SMALL",
+					"Image": "aws/codebuild/standard:3.0"
+				}
+			}
+		},
+		"CodeBuildRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "codebuild_reusable",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "codebuild.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"Policies": [
+					{
+						"PolicyName": "cloudwatch_logs",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": [
+										"logs:CreateLogGroup",
+										"logs:CreateLogStream",
+										"logs:PutLogEvents"
+									],
+									"Resource": [
+										{
+											"Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"PolicyName": "s3_artifact",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": "s3:GetObject",
+									"Resource": {
+										"Fn::Sub": "arn:aws:s3:::${MyArtifactS3}/*"
+									}
+								}
+							]
+						}
+					},
+					{
+						"PolicyName": "update_lambda_code",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": "lambda:UpdateFunctionCode",
+									"Resource": {
+										"Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*"
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		},
+		"MyArtifactS3": {
+			"Type": "AWS::S3::Bucket",
+			"Properties": {
+				"BucketName": "mnezir-pipeline-artifacts"
+			}
+		},
+		"PolicyForCodePipeline": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"Roles": [
+					{
+						"Ref": "MyPipelineRole"
+					}
+				],
+				"PolicyName": "s3_artifact_put",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Sid": "S3Artifact",
+							"Effect": "Allow",
+							"Action": "s3:PutObject",
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${MyArtifactS3}/*"
+							}
+						},
+						{
+							"Sid": "StartBuild",
+							"Effect": "Allow",
+							"Action": [
+								"codebuild:BatchGetBuilds",
+								"codebuild:StartBuild"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/*"
+							}
+						}
+					]
+				}
+			}
+		},
+		"MyPipelineRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "mnezir_pipeline_role",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "codepipeline.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				}
+			}
+		},
+		"PipelineWebpageFrontPorchWebhook": {
+			"Type": "AWS::CodePipeline::Webhook",
+			"Properties": {
+				"Authentication": "GITHUB_HMAC",
+				"AuthenticationConfiguration": {
+					"SecretToken": {
+						"Ref": "GitHubTokenParam"
+					}
+				},
+				"Filters": [
+					{
+						"JsonPath": "$.ref",
+						"MatchEquals": "refs/heads/{Branch}"
+					}
+				],
+				"TargetPipeline": {
+					"Ref": "MyPipeline"
+				},
+				"TargetAction": "SourceAction",
+				"TargetPipelineVersion": {
+					"Fn::GetAtt": [
+						"MyPipeline",
+						"Version"
+					]
+				},
+				"RegisterWithThirdParty": true
+			}
+		},
+		"MyPipeline": {
+			"Type": "AWS::CodePipeline::Pipeline",
+			"Properties": {
+				"Name": "MyPipeline",
+				"RoleArn": {
+					"Fn::GetAtt": [
+						"MyPipelineRole",
+						"Arn"
+					]
+				},
+				"ArtifactStore": {
+					"Type": "S3",
+					"Location": {
+						"Ref": "MyArtifactS3"
+					}
+				},
+				"Stages": [
+					{
+						"Name": "Source",
+						"Actions": [
+							{
+								"Name": "SourceAction",
+								"ActionTypeId": {
+									"Category": "Source",
+									"Owner": "ThirdParty",
+									"Provider": "GitHub",
+									"Version": "1"
+								},
+								"Configuration": {
+									"Owner": "mucahitnezir",
+									"Repo": "personal-website",
+									"Branch": "main",
+									"PollForSourceChanges": false,
+									"OAuthToken": {
+										"Ref": "GitHubTokenParam"
+									}
+								},
+								"OutputArtifacts": [
+									{
+										"Name": "material"
+									}
+								]
+							}
+						]
+					},
+					{
+						"Name": "Build",
+						"Actions": [
+							{
+								"Name": "Source",
+								"RunOrder": 1,
+								"InputArtifacts": [
+									{
+										"Name": "material"
+									}
+								],
+								"Configuration": {
+									"ProjectName": {
+										"Ref": "CodeBuildInbound"
+									}
+								},
+								"ActionTypeId": {
+									"Category": "Build",
+									"Owner": "AWS",
+									"Provider": "CodeBuild",
+									"Version": "1"
+								}
+							}
+						]
+					}
+				]
+			}
+		}
+	}
+}
