@@ -1,0 +1,41 @@
+{
+  "MyPipeline": {
+    "Type": "AWS::CodePipeline::Pipeline",
+    "Properties": {
+      "Name": "MyPipeline",
+      "RoleArn": { "Fn::GetAtt": [ "MyPipelineRole", "Arn" ] },
+      "ArtifactStore": {
+        "Type": "S3",
+        "Location": {
+          "Ref": "MyArtifactS3"
+        }
+      },
+      "Stages": [
+        {
+          "Name": "Source",
+          "Actions": [
+            {
+              "Name": "SourceAction",
+              "ActionTypeId": {
+                "Category": "Source",
+                "Owner": "ThirdParty",
+                "Provider": "GitHub",
+                "Version": "1"
+              },
+              "Configuration": {
+                "Owner": "mucahitnezir",
+                "Repo": "personal-website",
+                "Branch": "main"
+              },
+              "OutputArtifacts": [
+                {
+                  "Name": "material"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

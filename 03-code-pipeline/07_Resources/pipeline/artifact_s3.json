@@ -1,0 +1,8 @@
+{
+  "MyArtifactS3": {
+    "Type": "AWS::S3::Bucket",
+    "Properties": {
+      "BucketName": "mnezir-pipeline-artifacts"
+    }
+  }
+}
