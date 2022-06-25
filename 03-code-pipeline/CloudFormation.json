@@ -110,6 +110,126 @@
 				"BucketName": "mnezir-pipeline-artifacts"
 			}
 		},
+		"MyLambdaFunction": {
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+				"Code": {
+					"ZipFile": {
+						"Fn::Join": [
+							"",
+							[
+								"exports.handler = function(event) {\n",
+								"  return {\n",
+								"    statusCode: 200,\n",
+								"    body: JSON.stringify('Hello from Lambda!'),\n",
+								"  };\n",
+								"};\n"
+							]
+						]
+					}
+				},
+				"Handler": "exports.handler",
+				"Role": {
+					"Fn::GetAtt": [
+						"LambdaExecutionRole",
+						"Arn"
+					]
+				},
+				"Runtime": "nodejs16.x"
+			}
+		},
+		"LambdaExecutionRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "lambda.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"Path": "/",
+				"Policies": []
+			}
+		},
+		"MyPipeline": {
+			"Type": "AWS::CodePipeline::Pipeline",
+			"Properties": {
+				"Name": "MyPipeline",
+				"RoleArn": {
+					"Fn::GetAtt": [
+						"MyPipelineRole",
+						"Arn"
+					]
+				},
+				"ArtifactStore": {
+					"Type": "S3",
+					"Location": {
+						"Ref": "MyArtifactS3"
+					}
+				},
+				"Stages": [
+					{
+						"Name": "Source",
+						"Actions": [
+							{
+								"Name": "SourceAction",
+								"ActionTypeId": {
+									"Category": "Source",
+									"Owner": "ThirdParty",
+									"Provider": "GitHub",
+									"Version": "1"
+								},
+								"Configuration": {
+									"Owner": "mucahitnezir",
+									"Repo": "lambda-function",
+									"Branch": "main",
+									"PollForSourceChanges": false,
+									"OAuthToken": {
+										"Ref": "GitHubTokenParam"
+									}
+								},
+								"OutputArtifacts": [
+									{
+										"Name": "material"
+									}
+								]
+							}
+						]
+					},
+					{
+						"Name": "Build",
+						"Actions": [
+							{
+								"Name": "Source",
+								"RunOrder": 1,
+								"InputArtifacts": [
+									{
+										"Name": "material"
+									}
+								],
+								"Configuration": {
+									"ProjectName": {
+										"Ref": "CodeBuildInbound"
+									}
+								},
+								"ActionTypeId": {
+									"Category": "Build",
+									"Owner": "AWS",
+									"Provider": "CodeBuild",
+									"Version": "1"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
 		"PolicyForCodePipeline": {
 			"Type": "AWS::IAM::Policy",
 			"Properties": {
@@ -189,79 +309,6 @@
 					]
 				},
 				"RegisterWithThirdParty": true
-			}
-		},
-		"MyPipeline": {
-			"Type": "AWS::CodePipeline::Pipeline",
-			"Properties": {
-				"Name": "MyPipeline",
-				"RoleArn": {
-					"Fn::GetAtt": [
-						"MyPipelineRole",
-						"Arn"
-					]
-				},
-				"ArtifactStore": {
-					"Type": "S3",
-					"Location": {
-						"Ref": "MyArtifactS3"
-					}
-				},
-				"Stages": [
-					{
-						"Name": "Source",
-						"Actions": [
-							{
-								"Name": "SourceAction",
-								"ActionTypeId": {
-									"Category": "Source",
-									"Owner": "ThirdParty",
-									"Provider": "GitHub",
-									"Version": "1"
-								},
-								"Configuration": {
-									"Owner": "mucahitnezir",
-									"Repo": "personal-website",
-									"Branch": "main",
-									"PollForSourceChanges": false,
-									"OAuthToken": {
-										"Ref": "GitHubTokenParam"
-									}
-								},
-								"OutputArtifacts": [
-									{
-										"Name": "material"
-									}
-								]
-							}
-						]
-					},
-					{
-						"Name": "Build",
-						"Actions": [
-							{
-								"Name": "Source",
-								"RunOrder": 1,
-								"InputArtifacts": [
-									{
-										"Name": "material"
-									}
-								],
-								"Configuration": {
-									"ProjectName": {
-										"Ref": "CodeBuildInbound"
-									}
-								},
-								"ActionTypeId": {
-									"Category": "Build",
-									"Owner": "AWS",
-									"Provider": "CodeBuild",
-									"Version": "1"
-								}
-							}
-						]
-					}
-				]
 			}
 		}
 	}

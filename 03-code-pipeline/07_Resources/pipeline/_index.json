@@ -24,7 +24,7 @@
               },
               "Configuration": {
                 "Owner": "mucahitnezir",
-                "Repo": "personal-website",
+                "Repo": "lambda-function",
                 "Branch": "main",
                 "PollForSourceChanges": false,
                 "OAuthToken": { "Ref": "GitHubTokenParam" }
