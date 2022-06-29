@@ -1,0 +1,14 @@
+{
+  "RepositoryOwner": {
+    "Type": "String",
+    "Default": "mucahitnezir"
+  },
+  "RepositoryName": {
+    "Type": "String",
+    "Default": "lambda-function"
+  },
+  "RepositoryBranch": {
+    "Type": "String",
+    "Default": "main"
+  }
+}

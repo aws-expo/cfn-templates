@@ -23,9 +23,9 @@
                 "Version": "1"
               },
               "Configuration": {
-                "Owner": "mucahitnezir",
-                "Repo": "lambda-function",
-                "Branch": "main",
+                "Owner": { "Ref": "RepositoryOwner" },
+                "Repo": { "Ref": "RepositoryName" },
+                "Branch": { "Ref": "RepositoryBranch" },
                 "PollForSourceChanges": false,
                 "OAuthToken": { "Ref": "GitHubTokenParam" }
               },

@@ -2,6 +2,18 @@
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Description": "This is super CloudFormation template.",
 	"Parameters": {
+		"RepositoryOwner": {
+			"Type": "String",
+			"Default": "mucahitnezir"
+		},
+		"RepositoryName": {
+			"Type": "String",
+			"Default": "lambda-function"
+		},
+		"RepositoryBranch": {
+			"Type": "String",
+			"Default": "main"
+		},
 		"GitHubTokenParam": {
 			"Type": "String",
 			"NoEcho": true
@@ -192,9 +204,15 @@
 									"Version": "1"
 								},
 								"Configuration": {
-									"Owner": "mucahitnezir",
-									"Repo": "lambda-function",
-									"Branch": "main",
+									"Owner": {
+										"Ref": "RepositoryOwner"
+									},
+									"Repo": {
+										"Ref": "RepositoryName"
+									},
+									"Branch": {
+										"Ref": "RepositoryBranch"
+									},
 									"PollForSourceChanges": false,
 									"OAuthToken": {
 										"Ref": "GitHubTokenParam"
@@ -319,9 +337,7 @@
 		},
 		"MyArtifactS3": {
 			"Type": "AWS::S3::Bucket",
-			"Properties": {
-				"BucketName": "mnezir-pipeline-artifacts"
-			}
+			"Properties": {}
 		}
 	}
 }
