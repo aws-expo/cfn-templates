@@ -1,5 +1,9 @@
 ## cfn-templates
 
+To generate CloudFormation file:
+
+https://github.com/0x4447/0x4447-cli-node-grapes
+
 To deploy cloudformation stack:
 
 ```
