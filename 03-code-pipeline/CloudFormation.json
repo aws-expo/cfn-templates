@@ -29,7 +29,19 @@
 				"Environment": {
 					"Type": "LINUX_CONTAINER",
 					"ComputeType": "BUILD_GENERAL1_SMALL",
-					"Image": "aws/codebuild/standard:3.0"
+					"Image": "aws/codebuild/standard:3.0",
+					"EnvironmentVariables": [
+						{
+							"Name": "FUNCTION_NAME",
+							"Type": "PLAINTEXT",
+							"Value": {
+								"Fn::GetAtt": [
+									"MyLambdaFunction",
+									"Arn"
+								]
+							}
+						}
+					]
 				}
 			}
 		},
@@ -104,12 +116,6 @@
 				]
 			}
 		},
-		"MyArtifactS3": {
-			"Type": "AWS::S3::Bucket",
-			"Properties": {
-				"BucketName": "mnezir-pipeline-artifacts"
-			}
-		},
 		"MyLambdaFunction": {
 			"Type": "AWS::Lambda::Function",
 			"Properties": {
@@ -128,7 +134,7 @@
 						]
 					}
 				},
-				"Handler": "exports.handler",
+				"Handler": "index.handler",
 				"Role": {
 					"Fn::GetAtt": [
 						"LambdaExecutionRole",
@@ -309,6 +315,12 @@
 					]
 				},
 				"RegisterWithThirdParty": true
+			}
+		},
+		"MyArtifactS3": {
+			"Type": "AWS::S3::Bucket",
+			"Properties": {
+				"BucketName": "mnezir-pipeline-artifacts"
 			}
 		}
 	}

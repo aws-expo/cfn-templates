@@ -17,7 +17,7 @@
           ]
         }
       },
-      "Handler": "exports.handler",
+      "Handler": "index.handler",
       "Role": {
         "Fn::GetAtt": [
           "LambdaExecutionRole",
