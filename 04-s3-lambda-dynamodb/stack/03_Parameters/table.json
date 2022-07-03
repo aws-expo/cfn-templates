@@ -1,0 +1,7 @@
+{
+  "TableName": {
+    "Type": "String",
+    "Description": "The name of the dynamodb table to create",
+    "Default": "helloTable"
+  }
+}

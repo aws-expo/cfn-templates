@@ -1,0 +1,1 @@
+This CloudFormation stack is created to image resizing application.

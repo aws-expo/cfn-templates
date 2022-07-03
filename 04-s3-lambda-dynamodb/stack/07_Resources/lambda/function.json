@@ -1,0 +1,30 @@
+{
+  "LambdaFunction": {
+    "Type": "AWS::Lambda::Function",
+    "Properties": {
+      "Code": {
+        "ZipFile": "exports.handler = (event) => { return new Promise(function(resolve, reject) { resolve('OK'); }) };"
+      },
+      "Handler": "index.handler",
+      "MemorySize": 128,
+      "Role": {
+        "Fn::GetAtt": [
+          "LambdaExecutionRole",
+          "Arn"
+        ]
+      },
+      "Runtime": "nodejs16.x",
+      "Timeout": "300",
+      "Environment": {
+        "Variables": {
+          "TABLE_NAME": {
+            "Ref": "TableName"
+          },
+          "TARGET_BUCKET": {
+            "Ref": "TargetBucketName"
+          }
+        }
+      }
+    }
+  }
+}

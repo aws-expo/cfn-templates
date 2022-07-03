@@ -1,0 +1,33 @@
+{
+  "SourceBucket": {
+    "Type": "AWS::S3::Bucket",
+    "Properties": {
+      "BucketName": {
+        "Ref": "SourceBucketName"
+      },
+      "NotificationConfiguration": {
+        "LambdaConfigurations": [
+          {
+            "Event": "s3:ObjectCreated:*",
+            "Function": {
+              "Fn::GetAtt": [
+                "LambdaFunction",
+                "Arn"
+              ]
+            },
+            "Filter": {
+              "S3Key": {
+                "Rules": [
+                  {
+                    "Name": "prefix",
+                    "Value": "images/"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

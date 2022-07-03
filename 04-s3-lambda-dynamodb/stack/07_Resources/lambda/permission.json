@@ -1,0 +1,12 @@
+{
+  "FunctionPermission": {
+    "Type": "AWS::Lambda::Permission",
+    "Properties": {
+      "Action": "lambda:InvokeFunction",
+      "FunctionName": {
+        "Ref": "LambdaFunction"
+      },
+      "Principal": "s3.amazonaws.com"
+    }
+  }
+}
