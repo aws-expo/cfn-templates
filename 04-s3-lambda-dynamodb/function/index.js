@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const sharp = require('sharp');
 
 const s3 = new AWS.S3();
 const dynamoDB = new AWS.DynamoDB({
@@ -8,14 +9,31 @@ const dynamoDB = new AWS.DynamoDB({
 const { TABLE_NAME, TARGET_BUCKET } = process.env;
 
 exports.handler = async function(event, context) {
+  // Log the received event
   console.log('Received event: ', JSON.stringify(event, null, 2));
 
   const { bucket, object } = event.Records[0].s3;
+
+  // region Get Object from S3
 
   const getObjectParams = {
     Bucket: bucket.name,
     Key: decodeURIComponent(object.key.replace(/\\+/g, ' ')),
   };
+
+  const getObjectResponse = await s3.getObject(getObjectParams).promise()
+    .catch((err) => {
+      console.log('Failed to get object from S3: ', JSON.stringify(err, null, 2));
+      return null;
+    });
+
+  if (!getObjectResponse) {
+    return;
+  }
+
+  // endregion
+
+  // region Put Item to DynamoDB
 
   const putItemParams = {
     TableName: TABLE_NAME,
@@ -34,38 +52,32 @@ exports.handler = async function(event, context) {
     return;
   }
 
-  console.log('PutItem response: ', JSON.stringify(putItemResponse, null, 2));
+  // endregion
 
-  const getObjectResponse = await s3.getObject(getObjectParams).promise().catch((err) => {
-    console.log('Failed to get object from S3: ', JSON.stringify(err, null, 2));
-    return null;
-  });
+  // region Put object to target bucket
 
-  if (!getObjectResponse) {
-    console.log('Failed to get object from S3');
-    return;
-  }
+  const resizedBuffer = await sharp(getObjectResponse.Body)
+    .resize(200, 200, { fit: 'cover' })
+    .toBuffer();
 
-  console.log('ETag of file: ', getObjectResponse.ETag);
-
-  const putObjectResponse = await s3.putObject({
+  const putObjectParams = {
     Bucket: TARGET_BUCKET,
     Key: object.key,
-    Body: getObjectResponse.Body,
-    ContentType: getObjectResponse.ContentType,
-    ContentLength: getObjectResponse.ContentLength
-  }).promise().catch((err) => {
-    console.log('Failed to put object from S3: ', JSON.stringify(err, null, 2));
-    return null;
-  });
+    Body: resizedBuffer,
+    ContentType: getObjectResponse.ContentType
+  };
+
+  const putObjectResponse = await s3.putObject(putObjectParams).promise()
+    .catch((err) => {
+      console.log('Failed to put object from S3: ', JSON.stringify(err, null, 2));
+      return null;
+    });
 
   if (!putObjectResponse) {
-    console.log('Failed to put object from S3');
     return;
   }
 
-  console.log('Uploaded to target bucket');
+  // endregion
 
-  console.log(putObjectResponse.ETag);
   context.succeed(putObjectResponse.ETag);
 };
