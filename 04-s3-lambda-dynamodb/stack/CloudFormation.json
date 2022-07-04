@@ -19,42 +19,24 @@
 		}
 	},
 	"Resources": {
-		"SourceBucket": {
-			"Type": "AWS::S3::Bucket",
+		"Table": {
+			"Type": "AWS::DynamoDB::Table",
 			"Properties": {
-				"BucketName": {
-					"Ref": "SourceBucketName"
-				},
-				"NotificationConfiguration": {
-					"LambdaConfigurations": [
-						{
-							"Event": "s3:ObjectCreated:*",
-							"Function": {
-								"Fn::GetAtt": [
-									"LambdaFunction",
-									"Arn"
-								]
-							},
-							"Filter": {
-								"S3Key": {
-									"Rules": [
-										{
-											"Name": "prefix",
-											"Value": "images/"
-										}
-									]
-								}
-							}
-						}
-					]
-				}
-			}
-		},
-		"TargetBucket": {
-			"Type": "AWS::S3::Bucket",
-			"Properties": {
-				"BucketName": {
-					"Ref": "TargetBucketName"
+				"BillingMode": "PAY_PER_REQUEST",
+				"AttributeDefinitions": [
+					{
+						"AttributeName": "ImagePath",
+						"AttributeType": "S"
+					}
+				],
+				"KeySchema": [
+					{
+						"AttributeName": "ImagePath",
+						"KeyType": "HASH"
+					}
+				],
+				"TableName": {
+					"Ref": "TableName"
 				}
 			}
 		},
@@ -162,25 +144,54 @@
 				]
 			}
 		},
-		"Table": {
-			"Type": "AWS::DynamoDB::Table",
+		"SourceBucket": {
+			"Type": "AWS::S3::Bucket",
 			"Properties": {
-				"BillingMode": "PAY_PER_REQUEST",
-				"AttributeDefinitions": [
-					{
-						"AttributeName": "ImagePath",
-						"AttributeType": "S"
-					}
-				],
-				"KeySchema": [
-					{
-						"AttributeName": "ImagePath",
-						"KeyType": "HASH"
-					}
-				],
-				"TableName": {
-					"Ref": "TableName"
+				"BucketName": {
+					"Ref": "SourceBucketName"
+				},
+				"NotificationConfiguration": {
+					"LambdaConfigurations": [
+						{
+							"Event": "s3:ObjectCreated:*",
+							"Function": {
+								"Fn::GetAtt": [
+									"LambdaFunction",
+									"Arn"
+								]
+							},
+							"Filter": {
+								"S3Key": {
+									"Rules": [
+										{
+											"Name": "prefix",
+											"Value": "images/"
+										}
+									]
+								}
+							}
+						}
+					]
 				}
+			}
+		},
+		"TargetBucket": {
+			"Type": "AWS::S3::Bucket",
+			"Properties": {
+				"BucketName": {
+					"Ref": "TargetBucketName"
+				}
+			}
+		}
+	},
+	"Outputs": {
+		"DynamoTableArn": {
+			"Description": "The ARN of the dynamodb table.",
+			"Value": {
+				"Fn::GetAtt": [
+					"Table",
+					"Arn"
+				]
 			}
 		}
 	}

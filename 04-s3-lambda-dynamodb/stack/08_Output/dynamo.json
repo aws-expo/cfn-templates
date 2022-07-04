@@ -1,0 +1,8 @@
+{
+  "DynamoTableArn": {
+    "Description": "The ARN of the dynamodb table.",
+    "Value": {
+      "Fn::GetAtt": ["Table", "Arn"]
+    }
+  }
+}
