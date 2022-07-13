@@ -5,5 +5,6 @@
 
 ## The whole flow
 
+1. `npm install`
 1. `zip -r code.zip .`
 1. `aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://./code.zip`
